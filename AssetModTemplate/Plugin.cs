@@ -4,6 +4,8 @@ using BepInEx.Unity.Mono;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
+using MyAssetMod.Helper;
+using System.Collections;
 
 namespace MyAssetMod
 {
@@ -14,6 +16,48 @@ namespace MyAssetMod
         private static GameObject hair;
         private static Texture2D eye_texture;
 
+        string[] phrases = new string[]
+        {
+            "I expected a lot of stupid stuff but...",
+            "Genuinely irritating motherfucker lol.",
+            "Eat my ass.",
+            "It's winter dumbass there's snow outside.",
+            "What kind of moron... *sigh*",
+            "Impressively dumb.",
+            "I want you to be less dumb horny brain and more smart horny brain.",
+            "Do you ever stop being a dipshit? Quite sick of sighing every time I get told you said something fucking stupid and over-assuming.",
+            "I haven't had a user this fucking obnoxious since...",
+            "I made a mistake being too patient with every single fucking over-invested person that has had this kind of attitude.",
+            "I'm really sick of your shit, I've been addressing a lot of it regardless and you just don't learn.",
+            "Believe me shit like that stupid ass comment actively makes my day worse.",
+            "Your dumbass entitled attitude can eat shit.",
+            "I blame users for being dumb obnoxious cunts all the time.",
+            "Handy users are actually just the most entitled dumb cunts on the planet.",
+            "I take great pleasure in the fact that this game punishes dumb horny brains for being dumb.",
+            "Blows my mind how dumb you have to be.",
+            "You successfully complained enough, congratulations.",
+            "You win fuck you.",
+            "Someone's just begging for conflict here and I really can't be fucked.",
+            "Purposeful trolling's a lot more fun when you make it less obvious buddy.",
+            "I'm almost jealous of the shameless worthlessness, must be kinda nice and freeing for everyone's expectations of you to be that low.",
+            "Can already tell you'll get on my nerves.",
+            "Re:Zero's Rem is a dogshit waifu.",
+            "God I hate MMOs.",
+            "You are absolutely entitled to being a dumb cunt just as I am entitled to calling you a dumb cunt for it.",
+            "I hate platformers that pretend they're out of the 90s and have awful controls just for the sake of difficulty.",
+            "Yeah know your place.",
+            "Are you an idiot?",
+            "My discord is already filled with degenerates I don't want it to degenerate into a hornyposting zone.",
+            "Hey, good moment to shut the fuck up.",
+            "I fucking hate obnoxious doomer attention whores.",
+            "I have to confess I don't exactly hate when people are obnoxious, mostly just gives me a smirk.",
+            "I fuckin' hate users.",
+            "I can't argue against someone that owns up to being shitty.",
+            "I'm disabling anonymous suggestions people are too fucking stupid to realize I can't answer their questions through it.",
+            "As entertaining as it is I still hate this shit.",
+            "Such an irritating little shit..."
+        };
+
         private void Awake()
         {
             /* 
@@ -23,10 +67,6 @@ namespace MyAssetMod
             Logger = base.Logger;
             Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
-            // Load the assets into memory from your asset bundle file created in Unity.
-            Assets.LoadAssets();
-
-            // This makes the "OnSceneLoaded" function call when a scene is loaded.
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
@@ -37,100 +77,37 @@ namespace MyAssetMod
              */
             if (Equals(scene.name, Constants.SessionScene))
             {
-                /*
-                 * Create an instance of the hair asset in the 3D world. We will still need to set it's position and parent, if we want
-                 * it to actually move with her head.
-                 */
-                hair = GameObject.Instantiate(Assets.hair);
-
-                /* 
-                 * GameObjectHelper.GetGameObjectCheckFound finds a game object given part of its location in the scene tree.
-                 * You should generally at least provide the gameobject you want to find (e.g. Hair1) and its parent (e.g. HairPosition)
-                 * to avoid name conflicts.
-                 * If it can't find a GameObject, an error will be sent to the console.
-                 * 
-                 * This function cannot find game objects that are not currently active.
-                 * For that, you would need to find a parent GameObject that is enabled, get its transform with gameobject.transform,
-                 * then use transform.Find("name") on the transform to get one of its children.
-                 * See https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Transform.Find.html
-                 */
-                GameObject base_hair = GameObjectHelper.GetGameObjectCheckFound("HairPosition/Hair1");
-                GameObject other_hair = GameObjectHelper.GetGameObjectCheckFound("HairPosition/AltHairs");
-
-                /*
-                 * Disable any active hair. You should do this if you want to load a custom hairstyle.
-                 */
-                if (base_hair != null)
+                //FindFsmString.SearchInterations();
+                GameObject go = GameObject.Find("SceneTools/Repositories/InsultRepository/DegradationRepository");
+                ArrayList list = go.GetComponents<PlayMakerArrayListProxy>()[0].arrayList;
+                ArrayList list2 = go.GetComponents<PlayMakerArrayListProxy>()[2].arrayList;
+                int count = list.Count;
+                int count2 = list2.Count;
+                ShuffleArray(phrases);
+                int zed = 0;
+                for (int i = 0; i < count; i++)
                 {
-                    base_hair.SetActive(false);
-                    foreach (Transform hairstyle in base_hair.transform)
-                    {
-                        hairstyle.gameObject.SetActive(false);
-                    }
+                    list[i]=("\"" + phrases[zed % phrases.Length] + "\"");
+                    zed++;
                 }
-                if (other_hair != null)
+                for (int i = 0; i < count2; i++)
                 {
-                    other_hair.SetActive(false);
-                    foreach (Transform hairstyle in other_hair.transform)
-                    {
-                        hairstyle.gameObject.SetActive(false);
-                    }
+                    list2[i] = ("\"" + phrases[zed % phrases.Length] + "\"");
+                    zed++;
                 }
-
-                //This is the object we want to parent the hair asset to.
-                GameObject hair_pos = GameObjectHelper.GetGameObjectCheckFound("HairPosition");
-                //Then we set the transform of our hair asset to be parented to the HairPosition GameObject. This means the hair will move with her haid now.
-                hair.transform.SetParent(hair_pos.transform, false);
-
-                //I found these positional values to work best for my hair asset. You will have to play with them to find the right positioning.
-                /*
-                 * The Quaternion.identity is just zero rotation. If you need something else:
-                 * Quaternion myRotation = Quaternion.identity;
-                 * myRotation.eulerAngles = new Vector3(0, 0, somezrotation);
-                 * is probably the easiest way to do it. 
-                 * Or you could just change the rotation of the hair in the editor before you export the asset bundle.
-                 */
-                hair.transform.SetLocalPositionAndRotation(new Vector3(-0.002f, -0.025f, 0.031f), Quaternion.identity);
-
-                /*
-                 * Unlike a Prefab GameObject, you don't need to instance textures.
-                 */
-                eye_texture = Assets.eyes;
-                //The material that holds the eye texture is on the Face GameObject.
-                GameObject face = GameObjectHelper.GetGameObjectCheckFound("GirlCharacter/Face");
-                face.GetComponent<SkinnedMeshRenderer>().materials[5].SetTexture("_MainTex", eye_texture);
-                
-                /*
-                 * This prevents the hearts from appearing on her eyes when in the "thirsty" mood.
-                 * You may want to do this depending on the character you are going for.
-                 * 
-                 * In general this method is a good way to disable features you can't turn off normally,
-                 * because sometimes just disabling a GameObject won't work because an FSM will re-enable it.
-                 * You will probably have to poke around and experiment to find the right FSM to empty out.
-                 */
-                //Finds the FSM responsible for enabling the hearts (the 6th one attached to the face)
-                PlayMakerFSM thirsty_eyes = face.GetComponents<PlayMakerFSM>()[5];
-                // Removes all of its actions in each event.
-                foreach (HutongGames.PlayMaker.FsmState state in thirsty_eyes.FsmStates)
-                {
-                    state.Actions = [];
-                }
-
-                //Change the "Yes" button text.
-                EditButton("Yes");
             }
         }
 
-        /*
-         * This shows how to change some text on an object.
-         * This specific method may not always work for all text, sometimes the text is reset by a script or FSM.
-         */
-        private void EditButton(string button_name)
+        static void ShuffleArray<T>(T[] array)
         {
-            GameObject buttons = GameObjectHelper.GetGameObjectCheckFound("Positives ------------/");
-            Transform button = buttons.transform.Find(button_name + "/DoneBG/DoneText/Text (TMP)");
-
-            button.gameObject.GetComponent<TextMeshProUGUI>().SetText("Yeah");
+            for (int i = array.Length - 1; i > 0; i--)
+            {
+                int j = Random.Range(0, i + 1);
+                // Swap elements
+                T temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
         }
     }
 }
